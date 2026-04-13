@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Claude Code local settings (personal overrides, not for team)
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Prisma dev database
+backend/src/prisma/migrations/dev.db
+
+# Playwright
+backend/test-results/
+backend/playwright-report/

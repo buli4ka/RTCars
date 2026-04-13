@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  favorites     Favorite[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Source {
+  id         Int         @id @default(autoincrement())
+  slug       String      @unique
+  name       String
+  vehicles   Vehicle[]
+  scrapeJobs ScrapeJob[]
+}
+
+model Vehicle {
+  id           Int          @id @default(autoincrement())
+  sourceId     Int
+  source       Source       @relation(fields: [sourceId], references: [id])
+  externalId   String
+  vin          String?
+  year         Int?
+  make         String?
+  model        String?
+  trim         String?
+  bodyStyle    String?
+  color        String?
+  fuelType     String?
+  transmission String?
+  driveType    String?
+  engineSize   String?
+  odometer     Int?
+  damageMain   String?
+  damageSec    String?
+  keysPresent  Boolean?
+  runAndDrive  Boolean?
+  location     String?
+  auctionDate  DateTime?
+  currentBid   Decimal?     @db.Decimal(10, 2)
+  buyNowPrice  Decimal?     @db.Decimal(10, 2)
+  imageUrls    String[]
+  lotNumber    String?
+  auctionUrl   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  favorites    Favorite[]
+  bidHistory   BidHistory[]
+
+  @@unique([sourceId, externalId])
+  @@index([make])
+  @@index([model])
+  @@index([vin])
+  @@index([auctionDate])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  vehicleId Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, vehicleId])
+}
+
+model BidHistory {
+  id         Int      @id @default(autoincrement())
+  vehicleId  Int
+  vehicle    Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  bid        Decimal  @db.Decimal(10, 2)
+  recordedAt DateTime @default(now())
+}
+
+model ScrapeJob {
+  id         Int       @id @default(autoincrement())
+  sourceId   Int
+  source     Source    @relation(fields: [sourceId], references: [id])
+  status     String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  itemsCount Int?
+  error      String?
+}
