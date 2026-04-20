@@ -32,43 +32,65 @@
 
 ---
 
-## Implementation Order (6 Weeks)
+## Progress
 
-**Week 1 — Foundation**
-- Docker Compose (Postgres + Redis + Bull Board)
-- NestJS project scaffold
-- PrismaModule + schema migration
-- Source seeds (copart, iaa)
-- AppModule wiring
+Legend: ✅ Done · 🔄 In progress · ⬜ Not started
 
-**Week 2 — Auth + Users**
-- AuthModule: register, login, refresh, logout
-- JWT strategy + guards
-- UsersModule: /me, favorites endpoints
+### Week 1 — Foundation
+| Task | Status | Notes |
+|---|---|---|
+| Docker Compose (Postgres + Redis + Bull Board) | ✅ | `docker-compose.yml` ready |
+| NestJS 11 project scaffold | ✅ | pnpm, Node 22, strict TS |
+| Prisma schema + migrations | ✅ | Full schema: User, Vehicle, Source, BidHistory, Favorite, ScrapeJob |
+| AppModule wiring | ✅ | All modules imported |
+| Source seeds (copart, iaa) | ⬜ | Need `prisma db seed` script |
+| Next.js 16 scaffold | ✅ | Tailwind 4, shadcn/ui, Redux RTK Query |
+| Figma design | ✅ | Design System, Components, Listing, Detail, Auth, Profile |
 
-**Week 3 — Scrapers + Jobs**
-- `IScraper` interface + `BaseScraper`
-- `ScraperRegistryService`
-- Copart scraper
-- IAA scraper
-- BullMQ processors + scheduler
-- BidHistory recording
+### Week 2 — Auth + Users
+| Task | Status | Notes |
+|---|---|---|
+| AuthModule: register, login, refresh, logout | ✅ | Token rotation, httpOnly cookie |
+| JWT strategy + JwtAuthGuard + @Public() | ✅ | Global guard, @Public() decorator |
+| DTOs with class-validator | ✅ | RegisterDto, LoginDto |
+| UsersModule: /me endpoint | ✅ | GET /users/me |
+| UsersModule: favorites endpoints | ✅ | GET/POST/DELETE /users/me/favorites/:id |
 
-**Week 4 — Vehicles API + Fees**
-- VehiclesModule: listing with all filters, pagination, full-text, VIN search
-- `GET /vehicles/:id/bid-history`
-- FeesModule: Copart + IAA fee tables + calculate endpoint
-- AdminModule: manual scrape trigger + job history
+### Week 3 — Scrapers + Jobs
+| Task | Status | Notes |
+|---|---|---|
+| IScraper interface + VehicleData | ✅ | `scrapers/base/scraper.interface.ts` |
+| ScraperRegistryService | ⬜ | ScrapersModule is empty stub |
+| Copart scraper | ⬜ | |
+| IAA scraper | ⬜ | |
+| BullMQ queue + processor | ⬜ | JobsModule is empty stub |
+| BidHistory recording on scrape | ⬜ | |
 
-**Week 5 — Frontend Core**
-- Next.js 16 setup: Tailwind, shadcn/ui, Redux store
-- Listings page (RSC) + FilterPanel
-- VehicleCard + AuctionTimer
-- Vehicle detail page
+### Week 4 — Vehicles API + Fees
+| Task | Status | Notes |
+|---|---|---|
+| VehiclesModule: listing + filters + pagination | ⬜ | Stub only |
+| Full-text search (tsvector) | ⬜ | |
+| GET /vehicles/:id/bid-history | ⬜ | |
+| FeesModule: Copart + IAA fee tables | ⬜ | Stub only |
+| GET /fees/calculate | ⬜ | |
+| AdminModule: manual scrape trigger | ⬜ | Stub only |
+| AdminModule: scrape job history | ⬜ | |
 
-**Week 6 — Frontend Features + Polish**
-- FeeCalculator component
-- BidHistory Recharts graph
-- Login/register pages
-- Profile + favorites page
-- End-to-end smoke test
+### Week 5 — Frontend Core
+| Task | Status | Notes |
+|---|---|---|
+| Redux store + RTK Query wiring | ✅ | vehiclesApi, authApi, StoreProvider |
+| Listings page (RSC) + FilterPanel | ⬜ | Placeholder only |
+| VehicleCard component | ⬜ | |
+| AuctionTimer component | ⬜ | |
+| Vehicle detail page | ⬜ | Placeholder only |
+
+### Week 6 — Frontend Features + Polish
+| Task | Status | Notes |
+|---|---|---|
+| FeeCalculator component | ⬜ | |
+| BidHistory Recharts graph | ⬜ | |
+| Login / Register pages | ⬜ | Placeholder only |
+| Profile + Favorites page | ⬜ | Placeholder only |
+| End-to-end smoke test | ⬜ | |
