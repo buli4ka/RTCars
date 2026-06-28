@@ -70,13 +70,13 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Not started
 ### Week 4 — Vehicles API + Fees
 | Task | Status | Notes |
 |---|---|---|
-| VehiclesModule: listing + filters + pagination | ⬜ | Stub only |
-| Full-text search (tsvector) | ⬜ | |
-| GET /vehicles/:id/bid-history | ⬜ | |
+| VehiclesModule: listing + filters + pagination | ✅ | GET /vehicles + GET /vehicles/:id (active-only default, full filter set, sort) |
+| Full-text search (tsvector) | 🔄 | `search` param done via ILIKE/contains; tsvector FTS deferred |
+| GET /vehicles/:id/bid-history | ✅ | Ascending bid array |
 | FeesModule: Copart + IAA fee tables | ⬜ | Stub only |
 | GET /fees/calculate | ⬜ | |
-| AdminModule: manual scrape trigger | ⬜ | Stub only |
-| AdminModule: scrape job history | ⬜ | |
+| AdminModule: manual scrape trigger | ✅ | POST /admin/scrape/:source (done earlier) |
+| AdminModule: scrape job history | ✅ | GET /admin/scrape-jobs (done earlier) |
 
 ### Week 5 — Frontend Core
 | Task | Status | Notes |

@@ -15,54 +15,58 @@ Returns paginated list of vehicles with filtering.
 
 | Param | Type | Example |
 |---|---|---|
-| `page` | number | `1` |
-| `limit` | number | `24` |
-| `make` | string | `Toyota` |
-| `model` | string | `Camry` |
+Defaults to active lots only (`isActive=true`) unless `isActive=false` is passed.
+
+| Param | Type | Example |
+|---|---|---|
+| `page` | number (default 1) | `1` |
+| `limit` | number (default 24, max 100) | `24` |
+| `make` | string (exact, case-insensitive) | `FORD` |
+| `model` | string (exact, case-insensitive) | `FUSION` |
 | `yearMin` | number | `2015` |
 | `yearMax` | number | `2022` |
-| `damage` | string | `Front End` |
-| `location` | string | `Los Angeles` |
-| `sourceId` | string | `copart` |
-| `vin` | string | `1HGBH41JXMN109186` |
+| `damageMain` | string (partial) | `Front End` |
+| `location` | string (partial) | `Dallas` |
+| `sourceId` | number | `1` |
+| `vin` | string (partial) | `1HGBH41JXMN109186` |
 | `fuelType` | string | `Electric` |
 | `transmission` | string | `Automatic` |
-| `engineType` | string | `Gas` |
-| `engineDisplacement` | number | `2.0` |
 | `bodyStyle` | string | `SUV` |
 | `driveType` | string | `AWD` |
 | `color` | string | `Black` |
 | `keysPresent` | boolean | `true` |
 | `runAndDrive` | boolean | `true` |
+| `isActive` | boolean (default true) | `false` |
 | `sortBy` | `auctionDate\|currentBid\|year` | `auctionDate` |
 | `sortOrder` | `asc\|desc` | `asc` |
-| `search` | string | `honda civic hatchback` |
+| `search` | string (matches make/model/trim/lot#) | `honda civic` |
 
-**Response:**
+Unknown query params are rejected with `400`.
+
+**Response** (`Decimal` fields like `currentBid` are serialised as strings):
 ```json
 {
   "data": [
     {
-      "id": "clx...",
-      "make": "Toyota",
-      "model": "Camry",
+      "id": 149,
+      "sourceId": 1,
+      "make": "FORD",
+      "model": "FUSION",
       "year": 2019,
-      "vin": "4T1BF1FK0KU...",
-      "currentBid": 3200,
-      "auctionDate": "2026-04-15T14:00:00Z",
-      "auctionLocation": "Los Angeles, CA",
-      "primaryDamage": "Front End",
-      "thumbnailUrl": "https://...",
-      "sourceId": "copart",
-      "isActive": true
+      "vin": "3FA6P0HD6KR******",
+      "currentBid": "1700",
+      "auctionDate": "2026-06-30T16:00:00.000Z",
+      "location": "TX - DALLAS SOUTH",
+      "damageMain": "MINOR DENT/SCRATCHES",
+      "imageUrls": ["https://..."],
+      "isActive": true,
+      "source": { "slug": "copart", "name": "Copart" }
     }
   ],
-  "meta": {
-    "total": 1420,
-    "page": 1,
-    "limit": 24,
-    "totalPages": 60
-  }
+  "total": 360,
+  "page": 1,
+  "limit": 24,
+  "totalPages": 15
 }
 ```
 
@@ -78,11 +82,13 @@ Returns full vehicle details including all images and specs.
 
 Returns bid history for the auction chart.
 
+Ascending by `recordedAt`. `bid` is serialised as a string.
+
 ```json
 [
-  { "bid": 1200, "recordedAt": "2026-04-10T08:00:00Z" },
-  { "bid": 1800, "recordedAt": "2026-04-10T12:00:00Z" },
-  { "bid": 3200, "recordedAt": "2026-04-10T16:00:00Z" }
+  { "id": 30, "bid": "1200", "recordedAt": "2026-04-10T08:00:00Z" },
+  { "id": 31, "bid": "1800", "recordedAt": "2026-04-10T12:00:00Z" },
+  { "id": 32, "bid": "3200", "recordedAt": "2026-04-10T16:00:00Z" }
 ]
 ```
 
