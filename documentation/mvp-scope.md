@@ -65,6 +65,7 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Not started
 | IAA scraper | ✅ | DOM-based (server-rendered rows, `title="Label: value"` selectors); 100 lots persisted |
 | BullMQ queue + processor | ✅ | `jobs/` — 4h repeatable + manual trigger |
 | BidHistory recording on scrape | ✅ | `ScrapeRunnerService` upsert + bid-change tracking |
+| Scraper data lifecycle (discover new / refresh bids / expire gone) | ✅ | Bounded pagination + `isActive`/`lastSeenAt` + staleness expiry. Spec: [features/scraper-data-lifecycle.md](features/scraper-data-lifecycle.md). Full-catalog sweep = future |
 
 ### Week 4 — Vehicles API + Fees
 | Task | Status | Notes |

@@ -4,6 +4,7 @@ import type { Browser, BrowserContext, Page } from 'playwright';
 import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { type IScraper, type VehicleData } from './scraper.interface';
+import { DEFAULT_MAX_PAGES } from '../scrapers.constants';
 
 // Register the stealth plugin once for the whole process. It masks
 // navigator.webdriver, WebGL vendor, plugin list, etc. — the signals
@@ -105,6 +106,13 @@ export abstract class BaseScraper implements IScraper {
           password: decodeURIComponent(url.password),
         }
       : { server };
+  }
+
+  /** Max result pages to fetch per run (SCRAPE_MAX_PAGES, default 3). */
+  protected maxPages(): number {
+    const raw = Number(this.config.get<string>('SCRAPE_MAX_PAGES'));
+
+    return raw > 0 ? raw : DEFAULT_MAX_PAGES;
   }
 
   /** Randomised pause to avoid robotic request cadence. */

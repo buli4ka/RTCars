@@ -32,27 +32,85 @@ export class IaaScraper extends BaseScraper {
     const page = await this.newPage();
 
     try {
-      const rows = await this.loadResultRows(page);
-      this.logger.log(`IAA returned ${String(rows.length)} lots`);
+      await page.goto(SEARCH_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      await page.waitForSelector(RESULT_LINK, { timeout: 45_000 });
+      await this.humanDelay();
 
-      for (const row of rows) {
-        yield this.mapRow(row);
+      const seen = new Set<string>();
+      let total = 0;
+
+      for (let p = 1; p <= this.maxPages(); p += 1) {
+        if (p > 1 && !(await this.goToNextPage(page))) break;
+
+        const rows = await this.extractRows(page);
+        let newOnPage = 0;
+
+        for (const row of rows) {
+          if (seen.has(row.externalId)) continue;
+
+          seen.add(row.externalId);
+          newOnPage += 1;
+          total += 1;
+          yield this.mapRow(row);
+        }
+
+        if (newOnPage === 0) break; // pagination exhausted or didn't advance
       }
+
+      this.logger.log(`IAA returned ${String(total)} lots`);
     } finally {
       await this.close();
     }
   }
 
   /**
-   * IAA renders results server-side as table rows (no JSON API). Each field is
-   * exposed via a `title="Label: value"` attribute, which gives stable,
-   * label-keyed extraction. Throws if no rows render — the anti-bot signal.
+   * IAA paginates client-side (Knockout). Click the single-step "next" button
+   * and wait until the first result changes. Returns false when there is no
+   * next page (button missing/disabled) or it didn't advance in time.
    */
-  private async loadResultRows(page: Page): Promise<IaaRawRow[]> {
-    await page.goto(SEARCH_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-    await page.waitForSelector(RESULT_LINK, { timeout: 45_000 });
+  private async goToNextPage(page: Page): Promise<boolean> {
+    const next = page.locator('button.btn-next:not(.btn-next-10)').first();
+
+    if ((await next.count()) === 0 || (await next.isDisabled())) return false;
+
+    const firstId = await this.firstResultId(page);
+    await next.click();
+
+    try {
+      await page.waitForFunction(
+        (prev) => {
+          const a = document.querySelector<HTMLAnchorElement>('a[href*="/VehicleDetail/"]');
+          const m = a ? /\/VehicleDetail\/(\d+)/.exec(a.href) : null;
+
+          return m !== null && m[1] !== prev;
+        },
+        firstId,
+        { timeout: 20_000 },
+      );
+    } catch {
+      return false;
+    }
+
     await this.humanDelay();
 
+    return true;
+  }
+
+  private firstResultId(page: Page): Promise<string | null> {
+    return page.evaluate(() => {
+      const a = document.querySelector<HTMLAnchorElement>('a[href*="/VehicleDetail/"]');
+      const m = a ? /\/VehicleDetail\/(\d+)/.exec(a.href) : null;
+
+      return m ? m[1] : null;
+    });
+  }
+
+  /**
+   * IAA renders results server-side as table rows (no JSON API). Each field is
+   * exposed via a `title="Label: value"` attribute, which gives stable,
+   * label-keyed extraction.
+   */
+  private extractRows(page: Page): Promise<IaaRawRow[]> {
     return page.evaluate(() => {
       const out: IaaRawRow[] = [];
       const rows = document.querySelectorAll('.table-row');

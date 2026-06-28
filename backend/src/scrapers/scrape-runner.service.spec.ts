@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScraperRegistryService } from './base/scraper-registry.service';
@@ -11,12 +12,16 @@ function makePrismaMock() {
   return {
     source: { findUnique: jest.fn() },
     scrapeJob: { create: jest.fn(), update: jest.fn() },
-    vehicle: { findUnique: jest.fn(), upsert: jest.fn() },
+    vehicle: { findUnique: jest.fn(), upsert: jest.fn(), updateMany: jest.fn() },
     bidHistory: { create: jest.fn() },
   };
 }
 
 function makeRegistryMock() {
+  return { get: jest.fn() };
+}
+
+function makeConfigMock() {
   return { get: jest.fn() };
 }
 
@@ -50,16 +55,19 @@ describe('ScrapeRunnerService', () => {
   let service: ScrapeRunnerService;
   let prisma: ReturnType<typeof makePrismaMock>;
   let registry: ReturnType<typeof makeRegistryMock>;
+  let config: ReturnType<typeof makeConfigMock>;
 
   beforeEach(async () => {
     prisma = makePrismaMock();
     registry = makeRegistryMock();
+    config = makeConfigMock();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ScrapeRunnerService,
         { provide: PrismaService, useValue: prisma },
         { provide: ScraperRegistryService, useValue: registry },
+        { provide: ConfigService, useValue: config },
       ],
     }).compile();
 
@@ -72,6 +80,7 @@ describe('ScrapeRunnerService', () => {
     prisma.vehicle.findUnique.mockResolvedValue(null);
     prisma.vehicle.upsert.mockResolvedValue({ id: 10 });
     prisma.bidHistory.create.mockResolvedValue({});
+    prisma.vehicle.updateMany.mockResolvedValue({ count: 0 });
   });
 
   it('throws NotFound when no scraper is registered', async () => {
@@ -95,7 +104,7 @@ describe('ScrapeRunnerService', () => {
 
     const result = await service.run('copart');
 
-    expect(result).toEqual({ jobId: 1, itemsCount: 2 });
+    expect(result).toEqual({ jobId: 1, itemsCount: 2, deactivated: 0 });
     expect(prisma.vehicle.upsert).toHaveBeenCalledTimes(2);
     expect(prisma.scrapeJob.update).toHaveBeenCalledWith({
       where: { id: 1 },
@@ -176,5 +185,54 @@ describe('ScrapeRunnerService', () => {
       where: { id: 1 },
       data: expect.objectContaining({ status: 'failed', error: 'scrape boom' }),
     });
+  });
+
+  // ── lifecycle: lastSeenAt + expiry ──────────────────────────────────────────
+
+  it('stamps lastSeenAt and (re)activates the lot on upsert', async () => {
+    registry.get.mockReturnValue(fakeScraper([vehicle({ externalId: 'A' })]));
+
+    await service.run('copart');
+
+    const call = prisma.vehicle.upsert.mock.calls[0][0] as {
+      create: Record<string, unknown>;
+      update: Record<string, unknown>;
+    };
+    expect(call.create.lastSeenAt).toBeInstanceOf(Date);
+    expect(call.update.lastSeenAt).toBeInstanceOf(Date);
+    expect(call.update.isActive).toBe(true);
+  });
+
+  it('expires lots not seen within the stale window and returns the count', async () => {
+    prisma.vehicle.updateMany.mockResolvedValue({ count: 7 });
+    registry.get.mockReturnValue(fakeScraper([vehicle({ externalId: 'A' })]));
+
+    const result = await service.run('copart');
+
+    expect(result.deactivated).toBe(7);
+    expect(prisma.vehicle.updateMany).toHaveBeenCalledWith({
+      where: {
+        sourceId: 5,
+        isActive: true,
+        lastSeenAt: { lt: expect.any(Date) },
+      },
+      data: { isActive: false },
+    });
+  });
+
+  it('uses SCRAPE_STALE_AFTER_HOURS to compute the cutoff when set', async () => {
+    config.get.mockReturnValue('1'); // 1 hour
+    registry.get.mockReturnValue(fakeScraper([vehicle({ externalId: 'A' })]));
+
+    const before = Date.now();
+    await service.run('copart');
+
+    const where = prisma.vehicle.updateMany.mock.calls[0][0].where as {
+      lastSeenAt: { lt: Date };
+    };
+    const cutoffAgoMs = before - where.lastSeenAt.lt.getTime();
+    // ~1 hour ago (allow generous slack for test timing).
+    expect(cutoffAgoMs).toBeGreaterThan(50 * 60 * 1000);
+    expect(cutoffAgoMs).toBeLessThan(70 * 60 * 1000);
   });
 });

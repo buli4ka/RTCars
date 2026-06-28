@@ -52,23 +52,25 @@ export class CopartScraper extends BaseScraper {
     const page = await this.newPage();
 
     try {
-      const lots = await this.loadFirstResultsPage(page);
-      this.logger.log(`Copart returned ${String(lots.length)} lots`);
+      let total = 0;
 
-      for (const lot of lots) {
+      for await (const lot of this.streamLots(page)) {
+        total += 1;
         yield this.mapLot(lot);
       }
+
+      this.logger.log(`Copart returned ${String(total)} lots`);
     } finally {
       await this.close();
     }
   }
 
   /**
-   * Navigate the search results page and capture the search API JSON the page
-   * fires. Returns the parsed lot array. Throws if blocked / no data — that is
-   * the anti-bot pass/fail signal.
+   * Yield lots across pages. Page 1 comes from the JSON the results page fires
+   * (which solves the anti-bot challenge in-browser); further pages replay that
+   * same request with an incremented page number, reusing the browser session.
    */
-  private async loadFirstResultsPage(page: Page): Promise<CopartLot[]> {
+  private async *streamLots(page: Page): AsyncGenerator<CopartLot> {
     const responsePromise = page.waitForResponse(
       (res: Response) => res.url().includes(SEARCH_API_FRAGMENT) && res.ok(),
       { timeout: 45_000 },
@@ -81,9 +83,43 @@ export class CopartScraper extends BaseScraper {
     await this.humanDelay();
 
     const response = await responsePromise;
-    const body: unknown = await response.json();
+    yield* this.extractLots(await response.json());
 
-    return this.extractLots(body);
+    // Replay the captured search POST for subsequent pages.
+    const request = response.request();
+    const postData = request.postData();
+
+    if (!postData) return;
+
+    let body: Record<string, unknown>;
+
+    try {
+      body = JSON.parse(postData) as Record<string, unknown>;
+    } catch {
+      return;
+    }
+
+    if (typeof body.page !== 'number') return; // unknown shape — stop at page 1
+
+    const url = request.url();
+
+    for (let p = 1; p < this.maxPages(); p += 1) {
+      body.page = (body.page as number) + 1;
+      await this.humanDelay();
+
+      const res = await page.request.post(url, {
+        data: body,
+        headers: { 'content-type': 'application/json' },
+      });
+
+      if (!res.ok()) break;
+
+      const lots = this.extractLots(await res.json());
+
+      if (lots.length === 0) break;
+
+      yield* lots;
+    }
   }
 
   private extractLots(body: unknown): CopartLot[] {
