@@ -127,6 +127,7 @@ Use these sub-agents for focused work:
 - Branches: `feature/*`, `fix/*`, `refactor/*`, `docs/*`, `chore/*`
 - Commits: `type(scope): description` — e.g. `feat(scrapers): add Copart pagination`
 - PRs target `develop`, releases go `develop → main`
+- **Never run `git push`.** Commit locally when asked; the user pushes manually, always.
 - Full guide: `documentation/git-workflow.md`
 
 ## Documentation
