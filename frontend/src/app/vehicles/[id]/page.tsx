@@ -4,6 +4,7 @@ interface Props {
 
 export default async function VehicleDetailPage({ params }: Props) {
   const { id } = await params
+
   return (
     <main className="min-h-screen bg-zinc-100 p-8">
       <h1 className="text-2xl font-bold text-zinc-900">Vehicle #{id}</h1>
