@@ -16,11 +16,10 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  // Smoke test: the app boots and serves HTTP. There is no root route (all
+  // routes live under the `api/v1` prefix applied in main.ts), so `/` is a 404.
+  it('boots and responds to HTTP', () => {
+    return request(app.getHttpServer()).get('/').expect(404);
   });
 
   afterEach(async () => {

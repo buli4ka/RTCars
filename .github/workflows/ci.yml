@@ -44,33 +44,45 @@ jobs:
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
       NODE_ENV: test
+      # Keep the scrape scheduler from launching Playwright/hitting the proxy in CI.
+      SCRAPE_COPART_ENABLED: "false"
+      SCRAPE_IAA_ENABLED: "false"
 
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: cd backend && npm ci
+        run: cd backend && pnpm install --frozen-lockfile
+
+      # pnpm does not run dependencies' postinstall scripts, so the Prisma client
+      # is not auto-generated on install. Generate it explicitly before tsc/tests.
+      - name: Generate Prisma client
+        run: cd backend && pnpm exec prisma generate
 
       - name: Apply migrations
-        run: cd backend && npx prisma migrate deploy
+        run: cd backend && pnpm exec prisma migrate deploy
 
       - name: TypeScript check
-        run: cd backend && npx tsc --noEmit
+        run: cd backend && pnpm exec tsc --noEmit
 
       - name: ESLint
-        run: cd backend && npx eslint "src/**/*.ts"
+        run: cd backend && pnpm exec eslint "src/**/*.ts"
 
       - name: Unit tests
-        run: cd backend && npm run test:cov
+        run: cd backend && pnpm run test:cov
 
       - name: E2E tests
-        run: cd backend && npm run test:e2e
+        run: cd backend && pnpm run test:e2e
 
   frontend:
     name: Frontend — typecheck, lint, build
@@ -79,22 +91,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: cd frontend && npm ci
+        run: cd frontend && pnpm install --frozen-lockfile
 
       - name: TypeScript check
-        run: cd frontend && npx tsc --noEmit
+        run: cd frontend && pnpm exec tsc --noEmit
 
       - name: ESLint
-        run: cd frontend && npx eslint "src/**/*.{ts,tsx}"
+        run: cd frontend && pnpm exec eslint "src/**/*.{ts,tsx}"
 
       - name: Build
-        run: cd frontend && npm run build
+        run: cd frontend && pnpm run build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1

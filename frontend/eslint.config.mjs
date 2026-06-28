@@ -9,6 +9,18 @@ const eslintConfig = defineConfig([
 
   globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'node_modules/**']),
 
+  // Enable type-aware linting — required by rules like no-floating-promises and
+  // prefer-nullish-coalescing below, which crash without type information.
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
   {
     plugins: { unicorn },
     rules: {
