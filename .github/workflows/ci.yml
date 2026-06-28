@@ -53,7 +53,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
@@ -63,6 +63,11 @@ jobs:
 
       - name: Install dependencies
         run: cd backend && pnpm install --frozen-lockfile
+
+      # pnpm does not run dependencies' postinstall scripts, so the Prisma client
+      # is not auto-generated on install. Generate it explicitly before tsc/tests.
+      - name: Generate Prisma client
+        run: cd backend && pnpm exec prisma generate
 
       - name: Apply migrations
         run: cd backend && pnpm exec prisma migrate deploy
@@ -88,7 +93,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         with:

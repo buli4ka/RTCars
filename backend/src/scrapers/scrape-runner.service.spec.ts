@@ -75,8 +75,7 @@ describe('ScrapeRunnerService', () => {
   });
 
   it('throws NotFound when no scraper is registered', async () => {
-    registry.get.mockReturnValue();
-
+    // registry.get (jest.fn) returns undefined by default → no scraper.
     await expect(service.run('nope')).rejects.toThrow(NotFoundException);
     expect(prisma.scrapeJob.create).not.toHaveBeenCalled();
   });
