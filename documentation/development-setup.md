@@ -118,6 +118,26 @@ curl -X POST http://localhost:4000/api/v1/admin/scrape/copart \
 
 Watch progress at `http://localhost:3001` (Bull Board).
 
+### Scraper proxy & anti-bot gate
+
+Copart sits behind PerimeterX/HUMAN bot protection, which blocks datacenter IPs. Set a
+residential/mobile proxy in `backend/.env` before scraping:
+
+```bash
+SCRAPER_PROXY=http://user:pass@host:port
+```
+
+To validate that the Copart scraper can get past anti-bot (the go/no-go check for the
+whole pipeline), run the standalone gate test — it runs the real scraper without Nest or
+the DB and prints the lots it extracts:
+
+```bash
+cd backend
+npx ts-node --transpile-only scripts/gate-copart.ts
+```
+
+`PASS` = real lots returned. `FAIL` = 0 lots / block / timeout (revisit the proxy).
+
 ---
 
 ## Useful Commands

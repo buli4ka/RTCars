@@ -43,7 +43,7 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Not started
 | NestJS 11 project scaffold | ✅ | pnpm, Node 22, strict TS |
 | Prisma schema + migrations | ✅ | Full schema: User, Vehicle, Source, BidHistory, Favorite, ScrapeJob |
 | AppModule wiring | ✅ | All modules imported |
-| Source seeds (copart, iaa) | ⬜ | Need `prisma db seed` script |
+| Source seeds (copart, iaa) | ✅ | `prisma/seed.ts`, wired via `prisma.config.ts` |
 | Next.js 16 scaffold | ✅ | Tailwind 4, shadcn/ui, Redux RTK Query |
 | Figma design | ✅ | Design System, Components, Listing, Detail, Auth, Profile |
 
@@ -60,11 +60,11 @@ Legend: ✅ Done · 🔄 In progress · ⬜ Not started
 | Task | Status | Notes |
 |---|---|---|
 | IScraper interface + VehicleData | ✅ | `scrapers/base/scraper.interface.ts` |
-| ScraperRegistryService | ⬜ | ScrapersModule is empty stub |
-| Copart scraper | ⬜ | |
-| IAA scraper | ⬜ | |
-| BullMQ queue + processor | ⬜ | JobsModule is empty stub |
-| BidHistory recording on scrape | ⬜ | |
+| ScraperRegistryService | ✅ | `scrapers/base/scraper-registry.service.ts` |
+| Copart scraper | ✅ | playwright-extra + stealth + US residential proxy; anti-bot gate PASSED (20 lots) |
+| IAA scraper | ✅ | DOM-based (server-rendered rows, `title="Label: value"` selectors); 100 lots persisted |
+| BullMQ queue + processor | ✅ | `jobs/` — 4h repeatable + manual trigger |
+| BidHistory recording on scrape | ✅ | `ScrapeRunnerService` upsert + bid-change tracking |
 
 ### Week 4 — Vehicles API + Fees
 | Task | Status | Notes |

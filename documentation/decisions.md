@@ -47,6 +47,38 @@ Prisma wins for DX on a TypeScript project.
 
 ---
 
+## Scraper Anti-Bot: playwright-extra + stealth + residential proxy
+
+**Decision:** Scrapers run headless Chromium via `playwright-extra` with
+`puppeteer-extra-plugin-stealth`, routed through a US residential proxy (`SCRAPER_PROXY`).
+**Why:** Copart (PerimeterX/HUMAN) and IAA block datacenter IPs and headless fingerprints.
+Stealth masks `navigator.webdriver`, WebGL, plugins, etc.; a US residential IP makes traffic
+look organic. Proven against both sources. Two gotchas worth remembering:
+- **Proxy credentials must be passed to Playwright as `{ server, username, password }`** —
+  Chromium ignores credentials embedded in the `server` URL and returns HTTP 407. (`curl`
+  hides this because it parses URL creds.)
+- **Bandwidth:** the base scraper blocks `image`/`media`/`font` resource types (`page.route`)
+  so the metered proxy isn't billed for assets we never use (~5–10× saving). Scripts + the
+  document still load so the challenge resolves.
+
+---
+
+## Per-Source Extraction: Copart JSON intercept vs IAA DOM scraping
+
+**Decision:** Each scraper picks the most robust extraction strategy for its site, behind the
+same `IScraper` interface.
+- **Copart:** the search page fires `POST /public/lots/search-results` returning JSON
+  (`data.results.content[]`). We intercept that response — structured and resilient.
+- **IAA:** results are server-rendered HTML with no JSON API. We parse `.table-row` elements,
+  keyed off the stable `title="Label: value"` attributes on each field; auction date comes
+  from the watch button's `onclick`.
+**Why:** Forcing one strategy on both would be fragile. The interface hides the difference, so
+the runner and jobs treat them identically.
+Known limitation: IAA title parsing splits multi-word models ("Santa Fe" → model `SANTA`,
+trim `FE …`); refine later with a make/model dictionary.
+
+---
+
 ## Frontend Rendering: RSC for Listings, Client for Interactivity
 
 **Decision:** Listings page and detail page are React Server Components. Timers, filters, favorites are Client Components.  
