@@ -5,6 +5,27 @@ Interactive docs (Swagger UI): `http://localhost:4000/api/docs`
 
 ---
 
+## Errors & rate limiting
+
+Error responses use Nest's standard shape: `{ "statusCode", "message", "error" }`.
+
+| Code | When |
+|---|---|
+| `400` | Validation failure (invalid/unknown query or body params) |
+| `401` | Missing/invalid JWT on a protected route |
+| `404` | Resource not found |
+| `409` | Conflict (e.g. duplicate favorite/email; DB unique violation) |
+| `429` | Rate limit exceeded |
+| `500` | Unexpected server error (details logged server-side, not leaked) |
+
+Database errors are mapped to meaningful codes by a global Prisma exception filter
+(`P2002→409`, `P2025→404`, `P2003/P2000→400`).
+
+**Rate limit:** 100 requests per minute per client (in-memory). Exceeding it returns `429`
+with a `Retry-After` header.
+
+---
+
 ## Vehicles
 
 ### GET /vehicles

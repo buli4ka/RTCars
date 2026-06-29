@@ -128,6 +128,7 @@ Use these sub-agents for focused work:
 - Commits: `type(scope): description` — e.g. `feat(scrapers): add Copart pagination`
 - PRs target `develop`, releases go `develop → main`
 - **Never run `git push`.** Commit locally when asked; the user pushes manually, always.
+- **No `Co-Authored-By` / AI-attribution trailers** in commit messages — keep them clean.
 - Full guide: `documentation/git-workflow.md`
 
 ## Documentation
